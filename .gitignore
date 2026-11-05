@@ -1,0 +1,18 @@
+# Build, test, and profiling output
+/bin/
+/dist/
+/coverage.out
+*.test
+*.prof
+
+# Local broker data and configuration
+/data/
+.env
+.env.*
+!.env.example
+*.local.yaml
+
+# Editor and OS files
+.idea/
+.vscode/
+.DS_Store
