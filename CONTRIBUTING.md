@@ -11,5 +11,7 @@ Keep broker internals under `internal/`; reserve `pkg/client/` for the public SD
 Keep generated Protobuf code reproducible and separate from hand-written code.
 Do not commit credentials, local broker data, benchmark output, or compiled binaries.
 
-The baseline has no third-party Go dependencies. Introduce libraries when their
-implementation milestone needs them, and commit `go.sum` when dependencies produce it.
+Introduce libraries when their implementation milestone needs them, record the
+choice in `docs/decisions/`, and commit `go.sum`. Keep build tools in `tools/`
+rather than the root `go.mod`. After editing `.proto` files, run `make proto` and
+commit `api/gen`.

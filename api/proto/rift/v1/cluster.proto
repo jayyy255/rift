@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+// Package rift.v1 is the first versioned Rift broker API.
+//
+// Only cluster introspection exists so far. Publish, stream-consume, and
+// queue-lease RPCs will be added with milestone R1 once the WAL record format
+// and acknowledgment contract are specified.
+package rift.v1;
+
+// ClusterService exposes read-only cluster diagnostics.
+service ClusterService {
+  // GetStatus reports the answering broker and the members it knows about.
+  rpc GetStatus(GetStatusRequest) returns (GetStatusResponse);
+}
+
+message GetStatusRequest {}
+
+message GetStatusResponse {
+  // Identity of the broker that answered the request.
+  string node_id = 1;
+  // Build version of the answering broker.
+  string version = 2;
+  // Brokers known to the answering node, including itself.
+  repeated Broker brokers = 3;
+}
+
+message Broker {
+  string node_id = 1;
+  // Client-facing gRPC address, host:port.
+  string address = 2;
+  BrokerState state = 3;
+}
+
+enum BrokerState {
+  BROKER_STATE_UNSPECIFIED = 0;
+  BROKER_STATE_ALIVE = 1;
+  BROKER_STATE_UNREACHABLE = 2;
+}

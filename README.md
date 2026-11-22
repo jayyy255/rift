@@ -2,32 +2,41 @@
 
 A Go-native distributed event streaming and work-queue engine.
 
-**Status: repository scaffold.** Broker storage, messaging, replication, queue
-semantics, and networking are not implemented yet. The command entry points
-currently expose help and version information only.
+**Status: early scaffold.** The broker serves a gRPC API (cluster status and
+health checks) and Prometheus metrics; the `rift` CLI has the full target command
+tree, but only `rift cluster status` is implemented. Storage, messaging,
+replication, and queue semantics are not implemented yet.
 
 ## Local development
 
-Prerequisites: Go 1.26 or later, Git, and Make. Race checks also require a C compiler
-and CGO enabled. Docker Compose will be used for cluster testing in later milestones.
+Prerequisites: Go 1.26 or later, Git, Make, a C compiler (for the race detector),
+and Docker with Compose. Code-generation and lint tools (buf, protoc-gen-go,
+protoc-gen-go-grpc, golangci-lint) are pinned in `tools/` and run through
+`go tool`, so no system `protoc` is needed.
 
 ```sh
 git clone https://github.com/jayyy255/rift.git
 cd rift
-make check
-./bin/rift --version
-./bin/rift-broker --help
+make check                  # fmt, vet, lint, proto drift, race tests, build
+make run                    # broker: gRPC on :7070, metrics on :9100
+./bin/rift cluster status   # in another terminal
+make dev-up                 # Prometheus :9090, Grafana :3000, Toxiproxy :8474
 ```
 
-Without Make, run `go vet ./...`, `go test -race ./...`, and `go build ./cmd/...`.
-`make fmt` formats Go sources; `make build` writes the binaries to `bin/`.
+Other targets: `make proto` regenerates `api/gen` from `api/proto`, `make docker`
+builds the broker image, `make dev-down` stops the development stack. Technology
+choices and pinned versions are recorded in
+[ADR 0001](docs/decisions/0001-technology-stack-and-tooling.md).
 
 ## Repository layout
 
 ```text
 api/proto/              Versioned Protobuf API definitions
+api/gen/                Generated Go code (committed; do not edit)
 cmd/rift-broker/        Broker executable
 cmd/rift/               Administrative CLI
+internal/broker/       Broker process composition: gRPC, health, metrics
+internal/cli/          rift command tree (Cobra)
 internal/cluster/      Metadata consensus and membership
 internal/logstore/     WAL, segments, indexes, and recovery
 internal/replication/  Partition replication, epochs, and commit watermarks
@@ -40,7 +49,8 @@ examples/              Producer and consumer examples
 tests/integration/     Broker and API integration tests
 tests/chaos/           Crash and network fault scenarios
 bench/                 Reproducible workload benchmarks
-deployments/compose/   Future local three-broker cluster
+deployments/compose/   Dev observability/chaos stack; three-broker cluster later
+tools/                  Pinned code-generation and lint tools
 scripts/               Development and benchmark helpers
 docs/                  Architecture, milestones, and decisions
 .github/               CI and contribution templates
