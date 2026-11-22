@@ -19,3 +19,6 @@
 
 # Project specification (kept local)
 /Rift_Distributed_Streaming_Engineering_Specification.pdf
+
+# rapid writes failing cases here; commit one only as a deliberate regression case
+testdata/rapid/

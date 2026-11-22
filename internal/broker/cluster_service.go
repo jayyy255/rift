@@ -11,18 +11,16 @@ import (
 // (milestone R2) the only member a broker knows about is itself.
 type clusterService struct {
 	riftv1.UnimplementedClusterServiceServer
-
-	nodeID  string
-	address string
+	b *Broker
 }
 
 func (s *clusterService) GetStatus(context.Context, *riftv1.GetStatusRequest) (*riftv1.GetStatusResponse, error) {
 	return &riftv1.GetStatusResponse{
-		NodeId:  s.nodeID,
+		NodeId:  s.b.cfg.NodeID,
 		Version: version.Version,
 		Brokers: []*riftv1.Broker{{
-			NodeId:  s.nodeID,
-			Address: s.address,
+			NodeId:  s.b.cfg.NodeID,
+			Address: s.b.addr.Load().(string),
 			State:   riftv1.BrokerState_BROKER_STATE_ALIVE,
 		}},
 	}, nil
