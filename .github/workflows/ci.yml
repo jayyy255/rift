@@ -27,7 +27,16 @@ jobs:
             tools/go.sum
             tools/lint/go.sum
       - name: Format, vet, lint, proto drift, race checks, and build
+        env:
+          RIFT_REPORT_DIR: ${{ github.workspace }}/bin/reports
         run: make check
+      - name: Upload R1 acceptance reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r1-acceptance-reports
+          path: bin/reports/
+          if-no-files-found: warn
       - name: Command smoke checks
         run: |
           ./bin/rift --version

@@ -8,11 +8,25 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/jayyy255/rift/internal/version"
+	"github.com/jayyy255/rift/pkg/client"
 )
 
 type globalOptions struct {
-	broker  string
-	timeout time.Duration
+	broker   string
+	timeout  time.Duration
+	compress bool
+}
+
+func (o *globalOptions) dial() (*client.Client, error) {
+	opts := []client.Option{client.WithTimeout(o.timeout)}
+	if o.compress {
+		opts = append(opts, client.WithCompression())
+	}
+	c, err := client.Dial(o.broker, opts...)
+	if err != nil {
+		return nil, fmt.Errorf("connect to %s: %w", o.broker, err)
+	}
+	return c, nil
 }
 
 // NewRootCommand returns the rift command tree.
@@ -27,13 +41,14 @@ func NewRootCommand() *cobra.Command {
 	}
 	root.SetVersionTemplate("rift {{.Version}}\n")
 	root.PersistentFlags().StringVar(&opts.broker, "broker", "127.0.0.1:7070", "broker gRPC address")
-	root.PersistentFlags().DurationVar(&opts.timeout, "timeout", 5*time.Second, "per-request timeout")
+	root.PersistentFlags().DurationVar(&opts.timeout, "timeout", 10*time.Second, "per-request timeout")
+	root.PersistentFlags().BoolVar(&opts.compress, "compress", false, "gzip-compress requests and responses")
 
 	root.AddCommand(
 		newClusterCommand(opts),
-		newTopicCommand(),
-		newPublishCommand(),
-		newConsumeCommand(),
+		newTopicCommand(opts),
+		newPublishCommand(opts),
+		newConsumeCommand(opts),
 		newPartitionCommand(),
 		newBenchmarkCommand(),
 	)

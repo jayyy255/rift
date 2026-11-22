@@ -1,0 +1,76 @@
+syntax = "proto3";
+
+package rift.v1;
+
+// TopicService administers topics and reports partition state.
+service TopicService {
+  rpc CreateTopic(CreateTopicRequest) returns (CreateTopicResponse);
+  rpc DeleteTopic(DeleteTopicRequest) returns (DeleteTopicResponse);
+  rpc ListTopics(ListTopicsRequest) returns (ListTopicsResponse);
+  rpc DescribeTopic(DescribeTopicRequest) returns (DescribeTopicResponse);
+}
+
+// TopicInfo is the persisted configuration of a topic.
+message TopicInfo {
+  // 1-200 characters from [A-Za-z0-9._-], not starting with '.'.
+  string name = 1;
+  int32 partitions = 2;
+  // Always 1 until replication (milestone R3).
+  int32 replication_factor = 3;
+  // Per-partition time retention: 0 = broker default, -1 = unlimited.
+  int64 retention_ms = 4;
+  // Per-partition size retention: 0 = broker default, -1 = unlimited.
+  int64 retention_bytes = 5;
+  int64 created_at_ms = 6;
+}
+
+message CreateTopicRequest {
+  string name = 1;
+  // Number of partitions, 1-1024. 0 means 1.
+  int32 partitions = 2;
+  // 0 or 1. Values above 1 are rejected until milestone R3.
+  int32 replication_factor = 3;
+  int64 retention_ms = 4;
+  int64 retention_bytes = 5;
+}
+
+message CreateTopicResponse {
+  TopicInfo topic = 1;
+}
+
+message DeleteTopicRequest {
+  string name = 1;
+}
+
+message DeleteTopicResponse {}
+
+message ListTopicsRequest {}
+
+message ListTopicsResponse {
+  repeated TopicInfo topics = 1;
+}
+
+message DescribeTopicRequest {
+  string name = 1;
+}
+
+message DescribeTopicResponse {
+  TopicInfo topic = 1;
+  repeated PartitionInfo partitions = 2;
+}
+
+// PartitionInfo reports the state of one partition log.
+message PartitionInfo {
+  int32 partition = 1;
+  // Oldest offset still retained.
+  int64 log_start_offset = 2;
+  // Offset that the next appended record will receive. Records below it are
+  // readable. In R1 (single node) this equals the log end offset.
+  int64 high_watermark = 3;
+  // Records below this offset are fsynced to disk.
+  int64 synced_offset = 4;
+  int64 size_bytes = 5;
+  int32 segments = 6;
+  // Node ID of the partition leader.
+  string leader = 7;
+}

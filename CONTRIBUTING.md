@@ -6,6 +6,8 @@ Use small, focused branches and pull requests against `main`.
 2. Add a regression test when changing storage, ordering, delivery, or recovery behavior.
 3. Run `make check` before opening a pull request.
 4. Describe the behavior, validation, and any durability or compatibility impact.
+5. Update `README.md` (milestone table, "What works today", guarantees) and
+   `docs/roadmap.md` when a change adds or alters user-visible behavior.
 
 Keep broker internals under `internal/`; reserve `pkg/client/` for the public SDK.
 Keep generated Protobuf code reproducible and separate from hand-written code.

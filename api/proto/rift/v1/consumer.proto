@@ -1,0 +1,78 @@
+syntax = "proto3";
+
+package rift.v1;
+
+import "rift/v1/record.proto";
+
+// ConsumerService serves stream reads and consumer-group offset checkpoints.
+// Group membership and partition assignment arrive in milestone R4; in R1 a
+// group is a named offset namespace and consumers choose their partitions.
+service ConsumerService {
+  // Fetch reads records from one or more partitions of a topic, waiting up to
+  // max_wait_ms for data when none is available.
+  rpc Fetch(FetchRequest) returns (FetchResponse);
+  // CommitOffsets durably stores the next offset to consume per partition.
+  rpc CommitOffsets(CommitOffsetsRequest) returns (CommitOffsetsResponse);
+  rpc GetCommittedOffsets(GetCommittedOffsetsRequest) returns (GetCommittedOffsetsResponse);
+}
+
+message PartitionOffset {
+  int32 partition = 1;
+  int64 offset = 2;
+}
+
+message FetchRequest {
+  string topic = 1;
+  // Partitions to read and the offset to start each from.
+  repeated PartitionOffset partitions = 2;
+  // Maximum time to wait for data, capped by the broker. 0 returns at once.
+  int32 max_wait_ms = 3;
+  // Soft cap on response bytes. At least one record is returned per
+  // non-empty partition read, even if larger. 0 means the broker default.
+  int32 max_bytes = 4;
+  // 0 means the broker default.
+  int32 max_records_per_partition = 5;
+}
+
+message FetchResponse {
+  repeated PartitionRecords partitions = 1;
+}
+
+// PartitionError reports a per-partition fetch failure.
+enum PartitionError {
+  // No error.
+  PARTITION_ERROR_UNSPECIFIED = 0;
+  // The offset is below log_start_offset or above high_watermark.
+  PARTITION_ERROR_OFFSET_OUT_OF_RANGE = 1;
+  PARTITION_ERROR_UNKNOWN_PARTITION = 2;
+  // A stored record failed checksum or format validation.
+  PARTITION_ERROR_CORRUPT_DATA = 3;
+}
+
+message PartitionRecords {
+  int32 partition = 1;
+  repeated Record records = 2;
+  int64 high_watermark = 3;
+  int64 log_start_offset = 4;
+  PartitionError error = 5;
+  string error_message = 6;
+}
+
+message CommitOffsetsRequest {
+  string group = 1;
+  string topic = 2;
+  // Next offset to consume per partition (last processed offset + 1).
+  repeated PartitionOffset offsets = 3;
+}
+
+message CommitOffsetsResponse {}
+
+message GetCommittedOffsetsRequest {
+  string group = 1;
+  string topic = 2;
+}
+
+message GetCommittedOffsetsResponse {
+  // Only partitions with a committed offset are listed.
+  repeated PartitionOffset offsets = 1;
+}

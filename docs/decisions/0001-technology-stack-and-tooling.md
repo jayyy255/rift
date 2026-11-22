@@ -21,12 +21,13 @@ a library to `go.mod` only when its milestone needs it.
 | Metrics | `github.com/prometheus/client_golang` | v1.25.0 |
 | Goroutine lifecycles | `golang.org/x/sync` (errgroup) | v0.25.0 |
 | Structured logs | standard library `log/slog` | - |
+| Property tests (added in R1) | `pgregory.net/rapid` | v1.3.0 |
+| Disk usage (statfs) | `golang.org/x/sys` | (indirect via grpc) |
 
 **Selected for later milestones (pre-fetched into the module cache, not yet in `go.mod`):**
 
 | Milestone | Module | Version |
 | --- | --- | --- |
-| R1 property tests | `pgregory.net/rapid` | v1.3.0 |
 | R2 metadata consensus | `github.com/hashicorp/raft`, `github.com/hashicorp/raft-boltdb/v2` | v1.8.0, v2.4.2 |
 | Tracing | `go.opentelemetry.io/otel`, `go.opentelemetry.io/otel/sdk` | v1.47.0 |
 | Chaos tests | `github.com/Shopify/toxiproxy/v2` (client) | v2.13.0 |

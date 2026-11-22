@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package rift.v1;
+
+import "rift/v1/record.proto";
+
+// ProducerService appends records to topic partitions.
+service ProducerService {
+  // Publish appends a batch of records. Records are grouped by partition and
+  // appended in request order, so records sharing a key keep their order. A
+  // batch that spans partitions is not atomic: on error some partitions may
+  // have been appended, and a retry can create duplicates (at-least-once).
+  rpc Publish(PublishRequest) returns (PublishResponse);
+}
+
+// Durability is the condition that must hold before a publish is acknowledged.
+// Levels are never conflated: the response states the level actually achieved.
+enum Durability {
+  // Broker default. In R1 the default is DURABILITY_FSYNCED.
+  DURABILITY_UNSPECIFIED = 0;
+  // Appended to the leader's log in the OS page cache. Survives a broker
+  // process crash, but may be lost on power failure or OS crash.
+  DURABILITY_WRITTEN = 1;
+  // Appended and fsynced on the leader. Survives power failure of the leader
+  // unless its disk is lost. Not a replicated (quorum) guarantee.
+  DURABILITY_FSYNCED = 2;
+}
+
+message PublishRequest {
+  string topic = 1;
+  repeated PublishRecord records = 2;
+  Durability durability = 3;
+}
+
+message PublishRecord {
+  // Absent: keyless, assigned round-robin. Present: routed by key hash.
+  optional bytes key = 1;
+  bytes value = 2;
+  repeated Header headers = 3;
+  // Explicit partition; overrides key routing when set.
+  optional int32 partition = 4;
+}
+
+message PublishResponse {
+  // One acknowledgment per request record, in request order.
+  repeated RecordAck acks = 1;
+  // Durability level that holds for every record in this response.
+  Durability durability = 2;
+}
+
+message RecordAck {
+  int32 partition = 1;
+  int64 offset = 2;
+  // Leader epoch that assigned the offset. Always 0 until milestone R3.
+  int64 leader_epoch = 3;
+  int64 timestamp_ms = 4;
+}

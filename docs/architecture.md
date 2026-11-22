@@ -38,18 +38,22 @@ Expired leases and NACKs trigger bounded retries; exhausted records go to a DLQ.
 - A consumer ACK and an external side effect are not inherently atomic.
 - Buffers and retries must be bounded; overload must be observable.
 
-## Current implementation
+## Current implementation (R1: single node)
 
-- `rift-broker` serves gRPC (`rift.v1.ClusterService`, gRPC health, reflection) and
-  an HTTP endpoint with `/metrics`, `/healthz` and `/readyz`, with JSON `slog` logs
-  and graceful shutdown on SIGINT/SIGTERM.
-- `rift` (Cobra) implements `cluster status`; the other target commands exist with
-  their flags and report the milestone that will implement them.
-- Cluster status reports only the answering broker until Raft metadata exists (R2).
-- No storage, publish/consume schema, or replication protocol exists yet.
+| Package | Implemented |
+| --- | --- |
+| `internal/logstore` | Segmented WAL with CRC-32C frames, sparse index, rotation, group-commit fsync, crash recovery, retention, read-only inspection |
+| `internal/topics` | Atomic topic create/delete, per-partition logs, key routing, background flush and retention, fetch wake-ups |
+| `internal/offsets` | Durable consumer-group offsets, clamped after recovery |
+| `internal/routing` | Frozen FNV-1a key-to-partition mapping |
+| `internal/broker` | gRPC services (cluster, topic, producer, consumer, health), Prometheus metrics, disk watermarks, readiness |
+| `pkg/client` | Go SDK: admin, batching producer with bounded buffer and retries, stream consumer with commits, replay, and reset policies |
+| `cmd/rift` | `cluster status`, `topic create/delete/list/describe`, `publish`, `consume --mode stream` |
 
-See [ADR 0001](decisions/0001-technology-stack-and-tooling.md) for the selected
-libraries, including those reserved for later milestones.
+Not yet implemented: metadata consensus (R2), replication and leader epochs
+(R3; epochs are reported as 0), group membership and assignment (R4), queue
+mode (R5), adaptive placement (R6). See [storage-format.md](storage-format.md)
+for the disk format, durability levels, recovery rules, and known limitations.
 
 ## Scope
 
