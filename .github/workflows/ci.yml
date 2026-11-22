@@ -16,16 +16,21 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-          cache: false
-      - name: Format, vet, race checks, and build
+          cache-dependency-path: |
+            go.sum
+            tools/go.sum
+            tools/lint/go.sum
+      - name: Format, vet, lint, proto drift, race checks, and build
         run: make check
       - name: Command smoke checks
         run: |
           ./bin/rift --version
           ./bin/rift-broker --help
+      - name: Docker image build
+        run: docker build -t rift:ci .

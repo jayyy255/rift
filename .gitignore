@@ -16,3 +16,6 @@
 .idea/
 .vscode/
 .DS_Store
+
+# Project specification (kept local)
+/Rift_Distributed_Streaming_Engineering_Specification.pdf
