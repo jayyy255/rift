@@ -1,4 +1,8 @@
 # SDK examples
 
-Add runnable publish, stream replay, and queue-worker examples as the Go SDK ships.
-Each example must state its delivery and acknowledgment assumptions.
+| Example | Shows | Delivery assumptions |
+| --- | --- | --- |
+| [quickstart](quickstart/main.go) | Create a topic, publish keyed records with a batching producer, consume with a group | `fsynced` acks; at-least-once consumption with auto-commit on Close |
+
+Run a broker first (`make run`), then `go run ./examples/quickstart`.
+Stream replay and queue-worker examples will follow with milestones R4 and R5.
